@@ -23,3 +23,6 @@ SMV-SIMULATION/
 └── scripts/
     └── run_straight.py     # small runner script
 ```
+
+How to run:
+python -m scripts.run_straight
