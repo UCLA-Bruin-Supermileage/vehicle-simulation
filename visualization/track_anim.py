@@ -1,4 +1,6 @@
 # visualization/track_anim.py
+#builds the gemoetry of an oval race track for visualization 
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,27 +10,28 @@ from matplotlib.animation import FuncAnimation
 def build_oval_track(long_straight_ft=3300.0, short_straight_ft=660.0, corner_arc_ft=1320.0,
                      n_arc=200, n_line=200):
     # Corner radius from arc length of quarter circle: arc = (pi/2)*R
+
     R = corner_arc_ft / (np.pi / 2.0)
 
-    Lx = long_straight_ft
-    Ly = short_straight_ft
+    Lx = long_straight_ft #the length of a long horizontal straight  = 3300.0 ft
+    Ly = short_straight_ft #the length of a short vertical straight = 660.0 ft 
 
-    x_left = -Lx / 2.0
-    x_right = Lx / 2.0
-    y_bottom = -(Ly / 2.0 + R)
-    y_top = +(Ly / 2.0 + R)
+    x_left = -Lx / 2.0 #the leftmost point of the track
+    x_right = Lx / 2.0 #the rightmost point of the track
+    y_bottom = -(Ly / 2.0 + R) #lowest vertical point of track (from top-down view) 
+    y_top = +(Ly / 2.0 + R) #highest vertical point 
 
-    c_bl = (x_left, -(Ly / 2.0))
-    c_br = (x_right, -(Ly / 2.0))
-    c_tr = (x_right, +(Ly / 2.0))
-    c_tl = (x_left, +(Ly / 2.0))
+    c_bl = (x_left, -(Ly / 2.0)) #center of bottom left corner 
+    c_br = (x_right, -(Ly / 2.0)) #center of bottom right corner
+    c_tr = (x_right, +(Ly / 2.0)) #center of top right corner 
+    c_tl = (x_left, +(Ly / 2.0)) #center of top left corner
 
     # 1) Bottom straight
-    xb = np.linspace(x_left, x_right, n_line)
-    yb = np.full_like(xb, y_bottom)
+    xb = np.linspace(x_left, x_right, n_line)  #x moves from left to right in a line 
+    yb = np.full_like(xb, y_bottom) #y stays at vertical position y_bottom
 
     # 2) Bottom-right corner
-    th = np.linspace(-np.pi/2, 0.0, n_arc)
+    th = np.linspace(-np.pi/2, 0.0, n_arc) #creates a quarter circle 
     xbr = c_br[0] + R * np.cos(th)
     ybr = c_br[1] + R * np.sin(th)
 
