@@ -6,8 +6,8 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from sim.export import save_csv, save_json
-from sim.state import VehicleState
-from sim.integrator import run
+from sim.state import VehicleState #the initial state (position, velocity, acceleration, time) of the car 
+from sim.integrator import run #the function responsible for updating the state, throttle, and brake of the car 
 from models.straight_flat_power import StraightFlatPowerModel
 from visualization.track_anim import animate_history_on_track
 
