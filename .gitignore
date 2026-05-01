@@ -1,1 +1,59 @@
 outputs/
+Part 1 — PlanningMode (planning_agent.py)                     
+  - PLANNING_MODE_QUICK/GUIDED/OPTIONS constants +              
+  VALID_PLANNING_MODES                                          
+  -                                                             
+  OUTPUT_TYPE_DESIGN_BRIEF/CLARIFICATION_REQUEST/CONCEPT_OPTIONS
+   constants                                                    
+                                                                
+  Part 2 — Planning Outputs (planning_agent.py)                 
+  - ClarificationQuestion — id, question, options, default,     
+  importance, why_it_matters + to_dict/from_dict                
+  - ClarificationRequest — reason, questions,                   
+  can_proceed_with_assumptions, assumptions_if_proceeding +     
+  serialization                                                 
+  - ConceptOption — id, title, concept_summary, floor_count,    
+  level_strategies, circulation_strategy, adjacency_intents,    
+  tradeoffs, suggested_for + to_design_brief() conversion       
+  - ConceptOptions — options list, recommended_option_id, reason
+   + serialization                                              
+  - PlanningResult extended: planning_mode, output_type,        
+  optional design_brief/clarification_request/concept_options;  
+  planning_block_dict() now includes mode and output_type       
+                                                                
+  Part 3 — LLMPlanningAgent by mode — three distinct system     
+  prompts; unified _parse_and_validate() dispatcher on          
+  output_type; repair retry preserved for all modes
+                                                                
+  Part 4 — HeuristicPlanningAgent by mode — quick: existing     
+  behavior; guided: _prompt_is_ambiguous() →     
+  _make_heuristic_clarification() with floor/bedroom/layout     
+  questions; options: _make_heuristic_options() returns 3   
+  residential concept options (compact two-story, courtyard,
+  linear); non-residential options falls back to quick with note
+
+  Part 5 — CLI (ai_loop.py) — --planning-mode                   
+  quick|guided|options (default quick), passed to agent.plan()
+                                                                
+  Part 6 — Artifact export — planning block now includes        
+  planning_mode/output_type; clarification_request and
+  concept_options exported as top-level artifact keys; FD loop  
+  gated: if output_type != design_brief, exits after planning
+  export                                         
+
+  Part 7 — Frontend — types.ts: FDClarificationQuestion,        
+  FDClarificationRequest, FDConceptOption, FDConceptOptions;
+  FDPlanning updated; FDArtifact extended;                      
+  ClarificationRequestPanel.tsx (amber border, questions with
+  importance badges, defaults highlighted);      
+  ConceptOptionsPanel.tsx (violet border, recommended option
+  highlighted, tradeoffs, level strategy previews);
+  FDViewerClient.tsx renders both above DesignBriefPanel
+
+  Part 8 — Future selection hooks — question IDs + option IDs   
+  included in all serialized data;
+  ConceptOption.to_design_brief() ready for when user selects an
+   option                                                   
+                                                 
+  Tests — 22 new tests in test_planning_modes.py, all passing;  
+  all 96 prior tests still pass
