@@ -1,101 +1,68 @@
-# visualization/track_anim.py
-#builds the gemoetry of an oval race track for visualization 
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+from sim.track import M_TO_FT, OvalTrack
+
 
 def build_oval_track(long_straight_ft=3300.0, short_straight_ft=660.0, corner_arc_ft=1320.0,
                      n_arc=200, n_line=200):
-    # Corner radius from arc length of quarter circle: arc = (pi/2)*R
-
-    R = corner_arc_ft / (np.pi / 2.0)
-
-    Lx = long_straight_ft #the length of a long horizontal straight  = 3300.0 ft
-    Ly = short_straight_ft #the length of a short vertical straight = 660.0 ft 
-
-    x_left = -Lx / 2.0 #the leftmost point of the track
-    x_right = Lx / 2.0 #the rightmost point of the track
-    y_bottom = -(Ly / 2.0 + R) #lowest vertical point of track (from top-down view) 
-    y_top = +(Ly / 2.0 + R) #highest vertical point 
-
-    c_bl = (x_left, -(Ly / 2.0)) #center of bottom left corner 
-    c_br = (x_right, -(Ly / 2.0)) #center of bottom right corner
-    c_tr = (x_right, +(Ly / 2.0)) #center of top right corner 
-    c_tl = (x_left, +(Ly / 2.0)) #center of top left corner
-
-    # 1) Bottom straight
-    xb = np.linspace(x_left, x_right, n_line)  #x moves from left to right in a line 
-    yb = np.full_like(xb, y_bottom) #y stays at vertical position y_bottom
-
-    # 2) Bottom-right corner
-    th = np.linspace(-np.pi/2, 0.0, n_arc) #creates a quarter circle 
-    xbr = c_br[0] + R * np.cos(th)
-    ybr = c_br[1] + R * np.sin(th)
-
-    # 3) Right short straight
-    yr = np.linspace(-(Ly/2.0), +(Ly/2.0), n_line)
-    xr = np.full_like(yr, x_right + R)
-
-    # 4) Top-right corner
-    th = np.linspace(0.0, np.pi/2, n_arc)
-    xtr = c_tr[0] + R * np.cos(th)
-    ytr = c_tr[1] + R * np.sin(th)
-
-    # 5) Top straight
-    xt = np.linspace(x_right, x_left, n_line)
-    yt = np.full_like(xt, y_top)
-
-    # 6) Top-left corner
-    th = np.linspace(np.pi/2, np.pi, n_arc)
-    xtl = c_tl[0] + R * np.cos(th)
-    ytl = c_tl[1] + R * np.sin(th)
-
-    # 7) Left short straight
-    yl = np.linspace(+(Ly/2.0), -(Ly/2.0), n_line)
-    xl = np.full_like(yl, x_left - R)
-
-    # 8) Bottom-left corner
-    th = np.linspace(np.pi, 3*np.pi/2, n_arc)
-    xbl = c_bl[0] + R * np.cos(th)
-    ybl = c_bl[1] + R * np.sin(th)
-
-    X = np.concatenate([xb, xbr, xr, xtr, xt, xtl, xl, xbl])
-    Y = np.concatenate([yb, ybr, yr, ytr, yt, ytl, yl, ybl])
-
-    geom = {"R": R, "Lx": Lx, "Ly": Ly, "x_left": x_left, "y_bottom": y_bottom}
-    return X, Y, geom
+    track = OvalTrack.from_feet(long_straight_ft, short_straight_ft, corner_arc_ft)
+    x_m, y_m = track.sample_xy(points_per_segment=max(n_arc, n_line))
+    geom = {
+        "R": track.corner_radius_m * M_TO_FT,
+        "Lx": track.long_straight_m * M_TO_FT,
+        "Ly": track.short_straight_m * M_TO_FT,
+        "x_left": track.x_left_m * M_TO_FT,
+        "y_bottom": track.y_bottom_m * M_TO_FT,
+    }
+    return np.array(x_m) * M_TO_FT, np.array(y_m) * M_TO_FT, geom
 
 
 def map_history_to_bottom_straight(history, geom):
     """
-    Uses history['x_m'] (meters along straight) and maps it to bottom straight in feet.
+    Backward-compatible mapping for old straight-line histories.
     """
     x_m = np.array([row["x_m"] for row in history], dtype=float)
-    s_ft = x_m * 3.28084  # meters -> feet
-
-    # clamp to the straight length
-    s_ft = np.clip(s_ft, 0.0, geom["Lx"])
-
+    s_ft = np.clip(x_m * M_TO_FT, 0.0, geom["Lx"])
     x_track = geom["x_left"] + s_ft
     y_track = np.full_like(x_track, geom["y_bottom"])
     return x_track, y_track
 
 
-def animate_history_on_track(history, title="Car on bottom long straight (v1)"):
-    LONG_FT, SHORT_FT, CORNER_ARC_FT = 3300.0, 660.0, 1320.0
-    track_x, track_y, geom = build_oval_track(LONG_FT, SHORT_FT, CORNER_ARC_FT)
+def _history_track_xy(history, track, geom):
+    if history and "track_x_m" in history[0] and "track_y_m" in history[0]:
+        car_x = np.array([row["track_x_m"] for row in history], dtype=float) * M_TO_FT
+        car_y = np.array([row["track_y_m"] for row in history], dtype=float) * M_TO_FT
+        return car_x, car_y
 
-    car_x, car_y = map_history_to_bottom_straight(history, geom)
+    if history and "s_m" in history[0]:
+        coords = [track.xy_at(row["s_m"]) for row in history]
+        car_x = np.array([xy[0] for xy in coords], dtype=float) * M_TO_FT
+        car_y = np.array([xy[1] for xy in coords], dtype=float) * M_TO_FT
+        return car_x, car_y
+
+    return map_history_to_bottom_straight(history, geom)
+
+
+def animate_history_on_track(history, track=None, title="Car on track"):
+    if track is None:
+        track = OvalTrack.from_feet(3300.0, 660.0, 1320.0)
+
+    track_x_m, track_y_m = track.sample_xy(points_per_segment=200)
+    track_x = np.array(track_x_m) * M_TO_FT
+    track_y = np.array(track_y_m) * M_TO_FT
+    geom = {
+        "Lx": track.long_straight_m * M_TO_FT,
+        "x_left": track.x_left_m * M_TO_FT,
+        "y_bottom": track.y_bottom_m * M_TO_FT,
+    }
+
+    car_x, car_y = _history_track_xy(history, track, geom)
 
     t = np.array([row["t"] for row in history], dtype=float)
     v_mps = np.array([row["v_mps"] for row in history], dtype=float)
-
-    # end frame when reach end of bottom straight
-    reached = np.where((np.array([row["x_m"] for row in history]) * 3.28084) >= geom["Lx"])[0]
-    last_idx = int(reached[0]) if len(reached) else (len(history) - 1)
+    last_idx = len(history) - 1
 
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(track_x, track_y, linewidth=8)
@@ -124,16 +91,17 @@ def animate_history_on_track(history, title="Car on bottom long straight (v1)"):
         car_dot.set_data([car_x[i]], [car_y[i]])
 
         mph = v_mps[i] * 2.23694
-        dist_ft = history[i]["x_m"] * 3.28084
+        dist_ft = history[i].get("distance_total_m", history[i]["x_m"]) * M_TO_FT
+        segment = history[i].get("segment", "")
 
         info.set_text(
             f"t = {t[i]:.2f} s\n"
             f"v = {v_mps[i]:.2f} m/s ({mph:.1f} mph)\n"
-            f"distance along straight = {dist_ft:.0f} ft / {geom['Lx']:.0f} ft"
+            f"distance = {dist_ft:.0f} ft\n"
+            f"segment = {segment}"
         )
         return car_dot, info
 
-    # downsample frames for speed
     step = 5
     frames = range(0, last_idx + 1, step)
 
