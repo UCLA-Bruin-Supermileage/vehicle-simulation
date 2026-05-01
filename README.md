@@ -34,6 +34,7 @@ Optional visualization:
 python -m scripts.run_lap --laps 1
 
 Useful strategy options:
+python -m scripts.run_lap --strategy pace --target-lap-time 300 --no-plot
 python -m scripts.run_lap --strategy corner-aware --cruise-mph 34 --mu 0.75 --no-plot
 python -m scripts.run_lap --strategy full-throttle --no-plot
 
@@ -41,3 +42,8 @@ The lap simulator is still a 1D longitudinal model. The vehicle state uses
 `s_m` as distance along the track centerline, and the track maps that distance
 to x/y coordinates, segment names, and curvature. This keeps the physics simple
 while making full-lap energy and lap-time comparison possible.
+
+The `pace` strategy is the energy-focused baseline. It calculates remaining
+distance and remaining target time every timestep, then commands only enough
+throttle to stay on the required average speed. Use `--target-lap-time` to set
+the schedule it should conserve energy against.

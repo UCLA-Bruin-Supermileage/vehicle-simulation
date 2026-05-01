@@ -4,8 +4,16 @@ import inspect
 def _controller_output(controller, state, track=None):
     params = inspect.signature(controller).parameters
     if track is not None and len(params) >= 2:
-        return controller(state, track)
-    return controller(state)
+        result = controller(state, track)
+    else:
+        result = controller(state)
+
+    if len(result) == 2:
+        throttle, brake = result
+        return throttle, brake, {}
+
+    throttle, brake, outputs = result
+    return throttle, brake, outputs or {}
 
 
 def _power_for_energy(outputs):
@@ -56,8 +64,9 @@ def run(model, state, controller, T: float, dt: float):
 
     while state.t < T:
         old_s = state.s_m
-        throttle, brake = _controller_output(controller, state)
+        throttle, brake, controller_outputs = _controller_output(controller, state)
         outputs = model.step(state, throttle, brake, dt) or {}
+        outputs = {**controller_outputs, **outputs}
         state.distance_total_m += max(0.0, state.s_m - old_s)
         state.energy_used_J += max(0.0, float(_power_for_energy(outputs))) * float(dt)
         history.append(_history_row(state, throttle, brake, outputs))
@@ -80,8 +89,9 @@ def run_laps(model, track, state, controller, laps: int, dt: float, max_time: fl
 
     while state.lap < target_laps and state.t < max_time:
         old_s = state.s_m
-        throttle, brake = _controller_output(controller, state, track)
+        throttle, brake, controller_outputs = _controller_output(controller, state, track)
         outputs = model.step(state, throttle, brake, dt) or {}
+        outputs = {**controller_outputs, **outputs}
 
         new_s = state.s_m
         delta_s = max(0.0, new_s - old_s)
