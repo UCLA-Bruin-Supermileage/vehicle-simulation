@@ -1,8 +1,8 @@
 # scripts/run_and_visualize.py
 import sys, os
 
-from anyio import Path
 from datetime import datetime
+from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from sim.export import save_csv, save_json

@@ -25,7 +25,35 @@ def save_csv(history: List[Dict[str, Any]], path: str | Path) -> None:
         raise ValueError("history is empty")
 
     # union of keys (stable order: common keys first if present)
-    preferred = ["t", "x_m", "v_mps", "a_mps2", "throttle", "brake", "power_W", "F_drive_N", "F_rr_N"]
+    preferred = [
+        "t",
+        "lap",
+        "s_m",
+        "x_m",
+        "distance_total_m",
+        "track_x_m",
+        "track_y_m",
+        "segment",
+        "curvature_1pm",
+        "lateral_accel_mps2",
+        "lateral_accel_g",
+        "v_mps",
+        "a_mps2",
+        "throttle",
+        "brake",
+        "energy_used_J",
+        "energy_used_Wh",
+        "power_W",
+        "power_cmd_W",
+        "power_wheel_W",
+        "F_drive_N",
+        "F_rr_N",
+        "F_roll_N",
+        "F_drag_N",
+        "F_res_N",
+        "F_brake_N",
+        "F_net_N",
+    ]
     keys = []
     seen = set()
 

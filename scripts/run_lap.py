@@ -7,7 +7,6 @@ from sim.export import save_csv, save_json
 from sim.integrator import run_laps
 from sim.state import VehicleState
 from tracks.indy_ms import build_track
-from visualization.track_anim import animate_history_on_track
 
 
 def mph_to_mps(mph):
@@ -132,6 +131,8 @@ def main():
     print(f"Track length: {track.length_m:.1f} m ({track.length_m * 3.28084:.0f} ft)")
 
     if not args.no_plot:
+        from visualization.track_anim import animate_history_on_track
+
         animate_history_on_track(history, track=track, title=f"{args.strategy} lap")
 
 

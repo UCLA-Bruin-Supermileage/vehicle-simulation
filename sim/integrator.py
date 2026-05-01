@@ -34,11 +34,14 @@ def _history_row(state, throttle, brake, outputs, track=None):
     if track is not None:
         x_track_m, y_track_m = track.xy_at(state.s_m)
         segment = track.segment_at(state.s_m)
+        lateral_accel_mps2 = (state.v_mps * state.v_mps) * segment.curvature_1pm
         row.update({
             "track_x_m": x_track_m,
             "track_y_m": y_track_m,
             "segment": segment.name,
             "curvature_1pm": segment.curvature_1pm,
+            "lateral_accel_mps2": lateral_accel_mps2,
+            "lateral_accel_g": lateral_accel_mps2 / 9.81,
         })
     return row
 
